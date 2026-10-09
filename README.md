@@ -10,6 +10,8 @@ This is an independent project and is not affiliated with, endorsed by, or offic
 
 Add one **Copilot usage** key per GitHub account. Choose an account saved in GitHub CLI for each key; for example, configure one key for Personal and another for Work. The key makes the percentage of quota used the first thing you see, with used credits / quota and the relative reset countdown beneath it. Large credit totals are compacted on the key; the property inspector retains the exact values, reset time, last update, and any connection or schema errors. Loading, updating, stale, over-limit, and unavailable data have distinct labels, and missing data is never shown as zero.
 
+![Example Copilot usage keys for Work and Personal accounts](docs/images/copilot-usage-example.jpg)
+
 Set a short, single-line, bottom-aligned native Stream Deck title to distinguish accounts. The key image leaves a clear area for that title. Each visible key refreshes every five minutes; press it to refresh sooner.
 
 Usage is fetched from GitHub's `GET /copilot_internal/user` endpoint. This endpoint is undocumented and may change or stop working. The plugin validates the response and account identity, retains the last successful value as visibly stale when a refresh fails, and never substitutes zero or an estimate.
