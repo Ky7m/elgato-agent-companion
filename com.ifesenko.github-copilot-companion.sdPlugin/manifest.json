@@ -1,0 +1,51 @@
+{
+	"Name": "GitHub Copilot Companion",
+	"Version": "0.1.0.0",
+	"Author": "Igor Fesenko",
+	"Actions": [
+		{
+			"Name": "Copilot usage",
+			"UUID": "com.ifesenko.github-copilot-companion.usage",
+			"Icon": "imgs/plugin/category-icon",
+			"Tooltip": "Shows GitHub Copilot AI credits used in the current cycle.",
+			"PropertyInspectorPath": "ui/copilot-usage.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/plugin/category-icon",
+					"TitleAlignment": "bottom",
+					"ShowTitle": true,
+					"FontFamily": "Arial",
+					"FontSize": 12,
+					"FontStyle": "Bold",
+					"TitleColor": "#FFFFFF"
+				}
+			]
+		}
+	],
+	"Category": "GitHub Copilot Companion",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "Shows GitHub Copilot AI credit usage on Stream Deck.",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "12"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Nodejs": {
+		"Version": "24"
+	},
+	"UUID": "com.ifesenko.github-copilot-companion"
+}

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<title>Copilot usage settings</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<!--
+		THESIS: Make cycle credit consumption glanceable on a Stream Deck key without conflating it with session activity.
+		OWN-WORLD: A clean billing readout: pale canvas, inked figures, quiet gray track, violet progress.
+		STORY: Compare credits used with the returned quota, see the reset, and refresh on demand.
+		FIRST VIEWPORT: Credits lead; the native Stream Deck title distinguishes accounts; percentage and relative reset follow.
+		FORM: One key per account, with a native Stream Deck inspector for the saved GitHub account, trusted gh path, and current status.
+	-->
+	<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+	<style>
+		.usage-readout {
+			display: grid;
+			gap: 8px;
+			padding: 4px 0 10px;
+		}
+
+		.usage-value {
+			font-size: 1.35rem;
+			font-weight: 700;
+			line-height: 1.25;
+		}
+
+		.usage-meta,
+		.usage-status,
+		.usage-warning {
+			font-size: 0.85rem;
+			line-height: 1.4;
+		}
+
+		.usage-status[data-state="stale"],
+		.usage-status[data-state="unavailable"],
+		.usage-status[data-state="invalid"],
+		.usage-status[data-state="error"] {
+			color: #b54708;
+		}
+
+		.usage-status[data-state="overage"] {
+			color: #8a5a00;
+		}
+
+		.usage-warning {
+			color: #8a5a00;
+		}
+
+		.usage-progress {
+			width: 100%;
+			height: 8px;
+			overflow: hidden;
+			border-radius: 4px;
+			background: #d1d5db;
+		}
+
+		.usage-progress[hidden] {
+			display: none;
+		}
+
+		.usage-progress-fill {
+			width: 0;
+			height: 100%;
+			background: #6e40c9;
+		}
+
+		.refresh-button {
+			min-height: 32px;
+			padding: 6px 12px;
+			border: 1px solid currentColor;
+			border-radius: 4px;
+			color: inherit;
+			background: transparent;
+			font: inherit;
+			cursor: pointer;
+		}
+
+		.refresh-button:focus-visible,
+		.refresh-button:hover {
+			outline: 2px solid #6e40c9;
+			outline-offset: 2px;
+		}
+	</style>
+</head>
+<body>
+	<sdpi-item label="GitHub account">
+		<sdpi-select
+			id="github-account-picker"
+			setting="username"
+			datasource="getGitHubAccounts"
+			loading="Loading saved accounts…"
+			placeholder="Select a GitHub account"
+			hot-reload>
+		</sdpi-select>
+	</sdpi-item>
+	<sdpi-item>
+		<p class="usage-meta">Select the saved github.com account to use for this key. “Active in gh” is informational; the plugin never switches accounts.</p>
+		<button id="refresh-accounts" class="refresh-button" type="button">Refresh accounts</button>
+		<div id="account-discovery-status" class="usage-status" data-state="loading" aria-live="polite">Checking saved GitHub accounts…</div>
+	</sdpi-item>
+	<sdpi-item label="Trusted gh path">
+		<sdpi-textfield setting="ghPath" placeholder="Optional absolute path to gh"></sdpi-textfield>
+	</sdpi-item>
+	<sdpi-item>
+		<p class="usage-meta">Only set this to a GitHub CLI executable you trust. Leave blank to use PATH and standard install locations.</p>
+	</sdpi-item>
+	<sdpi-item label="This cycle">
+		<div class="usage-readout" aria-live="polite" aria-atomic="true">
+			<div id="usage-account" class="usage-meta">Waiting for account settings</div>
+			<div id="usage-value" class="usage-value">—</div>
+			<div id="usage-progress" class="usage-progress" role="progressbar" aria-label="AI credits used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+				<div id="usage-progress-fill" class="usage-progress-fill"></div>
+			</div>
+			<div id="usage-reset" class="usage-meta"></div>
+			<div id="usage-status" class="usage-status" data-state="setup">Select a saved GitHub account to begin.</div>
+			<div id="usage-warning" class="usage-warning" hidden></div>
+			<div id="usage-updated" class="usage-meta"></div>
+			<button id="refresh-usage" class="refresh-button" type="button">Refresh usage</button>
+		</div>
+	</sdpi-item>
+	<sdpi-item>
+		<p class="usage-meta">Usage is read from GitHub's undocumented Copilot quota endpoint. GitHub may change it; missing or stale data is shown as an error, not as zero.</p>
+	</sdpi-item>
+	<script>
+		(() => {
+			const client = SDPIComponents.streamDeckClient;
+			const account = document.getElementById("usage-account");
+			const value = document.getElementById("usage-value");
+			const progress = document.getElementById("usage-progress");
+			const progressFill = document.getElementById("usage-progress-fill");
+			const reset = document.getElementById("usage-reset");
+			const status = document.getElementById("usage-status");
+			const warning = document.getElementById("usage-warning");
+			const updated = document.getElementById("usage-updated");
+			const refreshButton = document.getElementById("refresh-usage");
+			const accountPicker = document.getElementById("github-account-picker");
+			const refreshAccountsButton = document.getElementById("refresh-accounts");
+			const accountDiscoveryStatus = document.getElementById("account-discovery-status");
+
+			function formatCredits(credits) {
+				return new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(credits);
+			}
+
+			function localDateTime(value) {
+				const date = new Date(value);
+				if (Number.isNaN(date.getTime())) {
+					return "unknown";
+				}
+
+				return date.toLocaleString(undefined, {
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+					hour: "numeric",
+					minute: "2-digit",
+					timeZoneName: "short"
+				});
+			}
+
+			function resetDescription(value) {
+				const resetAt = Date.parse(value);
+				if (!Number.isFinite(resetAt)) {
+					return "Reset time unavailable";
+				}
+
+				const date = localDateTime(value);
+				const remaining = resetAt - Date.now();
+				if (remaining <= 0) {
+					return `Cycle reset ${date}`;
+				}
+
+				const unit = remaining < 86_400_000 ? "hour" : "day";
+				const unitMs = unit === "hour" ? 3_600_000 : 86_400_000;
+				const amount = Math.ceil(remaining / unitMs);
+				const relative = new Intl.RelativeTimeFormat(undefined, { numeric: "always" }).format(amount, unit);
+				return `Resets ${relative} · ${date}`;
+			}
+
+			function render(message) {
+				account.textContent = message.username
+					? `@${message.username}`
+					: "No account selected";
+				status.dataset.state = message.status;
+				reset.textContent = "";
+				updated.textContent = "";
+				warning.hidden = true;
+				warning.textContent = "";
+				progress.hidden = true;
+				progress.removeAttribute("aria-valuemax");
+				progress.removeAttribute("aria-valuenow");
+				progressFill.style.width = "0";
+
+				if (message.snapshot) {
+					const snapshot = message.snapshot;
+					value.textContent = snapshot.unlimited
+						? `${formatCredits(snapshot.creditsUsed)} used · Unlimited`
+						: snapshot.entitlement === null
+							? `${formatCredits(snapshot.creditsUsed)} AI credits used · quota unknown`
+							: `${formatCredits(snapshot.creditsUsed)} / ${formatCredits(snapshot.entitlement)} AI credits`;
+
+					if (!snapshot.unlimited && snapshot.entitlement !== null && snapshot.entitlement > 0) {
+						const ratio = Math.max(0, Math.min(1, snapshot.creditsUsed / snapshot.entitlement));
+						progress.hidden = false;
+						progress.setAttribute("aria-valuemax", String(snapshot.entitlement));
+						progress.setAttribute("aria-valuenow", String(Math.min(snapshot.creditsUsed, snapshot.entitlement)));
+						progress.setAttribute("aria-valuetext", `${formatCredits(snapshot.creditsUsed)} of ${formatCredits(snapshot.entitlement)} AI credits`);
+						progressFill.style.width = `${ratio * 100}%`;
+					}
+
+					if (snapshot.resetAt) {
+						reset.textContent = resetDescription(snapshot.resetAt);
+					}
+					updated.textContent = `Last updated ${localDateTime(snapshot.fetchedAt)}`;
+					if (!snapshot.unlimited && snapshot.entitlement !== null && snapshot.creditsUsed > snapshot.entitlement) {
+						status.textContent = snapshot.overagePermitted
+							? "Usage is above the returned quota; additional usage is permitted."
+							: "Usage is above the returned quota; additional usage may be blocked.";
+						status.dataset.state = "overage";
+					} else if (message.status === "fresh") {
+						status.textContent = "Usage is up to date.";
+					} else if (message.status === "refreshing") {
+						status.textContent = "Refreshing usage…";
+					} else if (message.status === "expired") {
+						status.textContent = "The reported cycle has reset. Refreshing usage.";
+					} else if (message.status === "stale") {
+						status.textContent = message.error?.message || "Showing the last successful update.";
+					}
+
+					if (Array.isArray(snapshot.warnings) && snapshot.warnings.length > 0) {
+						warning.textContent = snapshot.warnings.join(" ");
+						warning.hidden = false;
+					}
+				} else {
+					value.textContent = message.status === "loading" ? "Loading…" : "—";
+				}
+
+				if (message.error) {
+					status.textContent = message.error.message;
+					status.dataset.state = message.status === "stale" ? "stale" : "unavailable";
+				} else if (message.message) {
+					status.textContent = message.message;
+				} else if (!message.snapshot) {
+					status.textContent = message.status === "invalid"
+						? "Enter a valid GitHub username."
+						: message.status === "waiting"
+							? "Place this action on a key to start usage checks."
+							: message.status === "setup"
+								? "Select a saved GitHub account to begin."
+								: message.status === "loading"
+									? "Checking GitHub CLI credentials and current usage…"
+									: "Usage is unavailable.";
+				}
+			}
+
+			function renderAccountDiscovery(message) {
+				accountDiscoveryStatus.dataset.state = message.status;
+				accountDiscoveryStatus.textContent = message.message;
+			}
+
+			client.sendToPropertyInspector.subscribe((event) => {
+				const message = event.payload;
+				if (message && typeof message === "object" && message.event === "usageState") {
+					render(message);
+				} else if (
+					message &&
+					typeof message === "object" &&
+					message.event === "githubAccountsState" &&
+					typeof message.contextId === "string"
+				) {
+					renderAccountDiscovery(message);
+				}
+			});
+
+			refreshAccountsButton.addEventListener("click", () => {
+				accountDiscoveryStatus.dataset.state = "loading";
+				accountDiscoveryStatus.textContent = "Refreshing saved GitHub accounts…";
+				if (typeof accountPicker.refresh === "function") {
+					accountPicker.refresh();
+				} else {
+					accountDiscoveryStatus.dataset.state = "error";
+					accountDiscoveryStatus.textContent = "The account picker could not refresh. Reopen the property inspector and try again.";
+				}
+			});
+
+			refreshButton.addEventListener("click", async () => {
+				status.textContent = "Requesting a refresh…";
+				try {
+					await client.send("sendToPlugin", { type: "refreshUsage" });
+				} catch {
+					status.textContent = "Could not request a refresh. Reopen the property inspector and try again.";
+					status.dataset.state = "unavailable";
+				}
+			});
+		})();
+	</script>
+</body>
+</html>
