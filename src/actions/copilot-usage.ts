@@ -71,7 +71,7 @@ interface PropertyInspectorMessenger {
 	sendToPropertyInspector(payload: InspectorState | AccountDataSourceResponse | AccountDiscoveryState): Promise<void>;
 }
 
-@action({ UUID: "com.ifesenko.github-copilot-companion.usage" })
+@action({ UUID: "com.ifesenko.agent-companion.ghcp-usage" })
 export class CopilotUsageAction extends SingletonAction<CopilotUsageSettings> {
 	private readonly bindings = new ActionBindingRegistry();
 	private readonly visibleKeys = new Set<string>();

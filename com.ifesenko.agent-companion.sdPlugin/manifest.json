@@ -1,11 +1,11 @@
 {
-	"Name": "GitHub Copilot Companion",
+	"Name": "Agent Companion",
 	"Version": "0.1.0.0",
 	"Author": "Igor Fesenko",
 	"Actions": [
 		{
-			"Name": "Copilot usage",
-			"UUID": "com.ifesenko.github-copilot-companion.usage",
+			"Name": "GitHub Copilot Usage",
+			"UUID": "com.ifesenko.agent-companion.ghcp-usage",
 			"Icon": "imgs/plugin/category-icon",
 			"Tooltip": "Shows GitHub Copilot AI credits used in the current cycle.",
 			"PropertyInspectorPath": "ui/copilot-usage.html",
@@ -25,10 +25,10 @@
 			]
 		}
 	],
-	"Category": "GitHub Copilot Companion",
+	"Category": "Agent Companion",
 	"CategoryIcon": "imgs/plugin/category-icon",
 	"CodePath": "bin/plugin.js",
-	"Description": "Shows GitHub Copilot AI credit usage on Stream Deck.",
+	"Description": "Shows AI agent credit usage on Stream Deck.",
 	"Icon": "imgs/plugin/marketplace",
 	"SDKVersion": 3,
 	"Software": {
@@ -38,14 +38,10 @@
 		{
 			"Platform": "mac",
 			"MinimumVersion": "12"
-		},
-		{
-			"Platform": "windows",
-			"MinimumVersion": "10"
 		}
 	],
 	"Nodejs": {
 		"Version": "24"
 	},
-	"UUID": "com.ifesenko.github-copilot-companion"
+	"UUID": "com.ifesenko.agent-companion"
 }

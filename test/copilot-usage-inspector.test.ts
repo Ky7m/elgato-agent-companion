@@ -37,7 +37,7 @@ function createElement(): TestElement {
 }
 
 test("the inspector shows relative reset time, distinguishes overage, and clamps progress semantics", () => {
-	const html = readFileSync("com.ifesenko.github-copilot-companion.sdPlugin/ui/copilot-usage.html", "utf8");
+	const html = readFileSync("com.ifesenko.agent-companion.sdPlugin/ui/copilot-usage.html", "utf8");
 	assert.doesNotMatch(html, /setting="label"/);
 	assert.match(html, /<sdpi-select[\s\S]*?setting="username"[\s\S]*?datasource="getGitHubAccounts"[\s\S]*?hot-reload/);
 	assert.doesNotMatch(html, /<sdpi-textfield setting="username"/);

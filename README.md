@@ -1,4 +1,4 @@
-# GitHub Copilot Companion
+# Agent Companion
 
 A local Stream Deck plugin that displays GitHub Copilot AI credits used in the current cycle. It uses Elgato's official Node.js SDK and GitHub CLI credentials; it does not run a cloud service or read Copilot session transcripts.
 
@@ -75,7 +75,7 @@ For local debugging, temporarily set `Nodejs.Debug` to `enabled` in the plugin m
 - `src/copilot/usage-store.ts` shares refreshes and polls visible keys.
 - `src/copilot/usage-types.ts` defines usage states, snapshots, and errors.
 - `src/copilot/render-usage.ts` renders the usage tile.
-- `com.ifesenko.github-copilot-companion.sdPlugin/ui/copilot-usage.html` provides account selection and detailed usage status.
+- `com.ifesenko.agent-companion.sdPlugin/ui/copilot-usage.html` provides account selection and detailed usage status.
 
 ## Security
 
