@@ -6,7 +6,7 @@ import path from "node:path";
 import url from "node:url";
 
 const isWatching = !!process.env.ROLLUP_WATCH;
-const sdPlugin = "com.ifesenko.github-copilot-companion.sdPlugin";
+const sdPlugin = "com.ifesenko.agent-companion.sdPlugin";
 
 /** @type {import('rollup').RollupOptions} */
 export default {

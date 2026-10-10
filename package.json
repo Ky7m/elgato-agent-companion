@@ -11,9 +11,9 @@
     "scripts": {
         "build": "rollup -c",
         "test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('build-test/package.json', JSON.stringify({ type: 'commonjs' }))\" && node scripts/run-tests.js",
-        "link": "streamdeck link ./com.ifesenko.github-copilot-companion.sdPlugin",
-        "unlink": "streamdeck unlink com.ifesenko.github-copilot-companion",
-        "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.ifesenko.github-copilot-companion\""
+        "link": "streamdeck link ./com.ifesenko.agent-companion.sdPlugin",
+        "unlink": "streamdeck unlink com.ifesenko.agent-companion",
+        "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.ifesenko.agent-companion\""
     },
     "type": "module",
     "devDependencies": {
