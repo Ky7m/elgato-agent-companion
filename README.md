@@ -38,7 +38,7 @@ In Stream Deck, add a **Copilot usage** action to a key and choose its saved Git
 
 Account discovery uses `gh auth status --json hosts`, which requires GitHub CLI 2.81 or newer. Native multi-account authentication and `gh auth token --user` are available in gh 2.40 and newer, but update to 2.81+ to use the account picker. If no accounts appear, run `gh auth status --hostname github.com` in the same user environment as Stream Deck and use **Refresh accounts**. If sign-in status cannot be verified, check your connection and the account-specific status in `gh auth status`. Saved account names are case-insensitive for matching, but the plugin preserves their spelling when reading credentials. Existing manually configured usernames are not cleared when account discovery fails or the saved account is missing.
 
-The plugin looks for `gh` on `PATH` and in standard macOS and Windows install locations. If Stream Deck cannot find a custom installation, set its absolute executable path in **Trusted gh path**. Only use a `gh` executable you trust.
+The plugin looks for `gh` on `PATH` and in standard macOS install locations. If Stream Deck cannot find a custom installation, set its absolute executable path in **Trusted gh path**. Only use a `gh` executable you trust.
 
 ## Privacy and limitations
 
